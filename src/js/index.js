@@ -4,10 +4,11 @@
  * [메뉴 추가]
  * - [x] 메뉴 이름을 입력 받는다.
  * - [x] 입력한 메뉴를 엔터키 입력으로 추가한다.
+ * - [ ] 확인 버튼 누르면 추가된다.
  * - [x] 추가되는 메뉴의 아래 마크업은 `<ul id="espresso-menu-list" class="mt-3 pl-0"></ul>` 안에 삽입해야 한다.
  * - [x] 총 메뉴 갯수를 count 하여 상단에 보여준다.
- * - [ ] 메뉴가 추가되고 나면, input 은 빈 값으로 초기화한다.
- * - [ ] 사용자 입력값이 빈 값이라면 추가되지 않는다.
+ * - [x] 메뉴가 추가되고 나면, input 은 빈 값으로 초기화한다.
+ * - [x] 사용자 입력값이 빈 값이라면 추가되지 않는다.
  */
 
 const $ = (selector) => document.querySelector(selector);
@@ -19,11 +20,7 @@ function App() {
     e.preventDefault();
   });
 
-  $("#espresso-menu-name").addEventListener("keypress", (e) => {
-    if (e.key !== "Enter") {
-      return;
-    }
-
+  const addMenu = () => {
     if ($("#espresso-menu-name").value === "") {
       alert("메뉴를 입력하세요!");
       return;
@@ -69,6 +66,18 @@ function App() {
 
     /** input 은 빈 값으로 초기화 */
     $("#espresso-menu-name").value = "";
+  };
+
+  $("#espresso-menu-submit-button").addEventListener("click", () => {
+    addMenu();
+  });
+
+  $("#espresso-menu-name").addEventListener("keypress", (e) => {
+    if (e.key !== "Enter") {
+      return;
+    }
+
+    addMenu();
   });
 }
 
