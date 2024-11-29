@@ -15,11 +15,16 @@ const $ = (selector) => document.querySelector(selector);
 
 // 이 함수가 실행해야함
 function App() {
-  /** 메뉴 수정 */
-  // 수정 버튼에 이벤트를 주려고했는데, 코드를 짜는 시점에 수정 버튼이 없다.
-  // 이럴때 "이벤트 위임"이라는 것을 통해 해결할 수 있다.
-  // 즉, 요소가 아직 없을 때, 다른애한테 이벤트를 먼저 받고있으라고 위임할 수 있다.
+  const updateMenuCount = () => {
+    const menuCount = $("#espresso-menu-list").querySelectorAll("li").length;
+    $(".menu-count").innerText = `총 ${menuCount} 개`;
+  };
+
   $("#espresso-menu-list").addEventListener("click", (e) => {
+    /** 메뉴 수정 */
+    // 수정 버튼에 이벤트를 주려고했는데, 코드를 짜는 시점에 수정 버튼이 없다.
+    // 이럴때 "이벤트 위임"이라는 것을 통해 해결할 수 있다.
+    // 즉, 요소가 아직 없을 때, 다른애한테 이벤트를 먼저 받고있으라고 위임할 수 있다.
     if (e.target.classList.contains("menu-edit-button")) {
       const $menuName = e.target.closest("li").querySelector(".menu-name");
       let updatedMenuName = prompt(
@@ -27,6 +32,14 @@ function App() {
         $menuName.innerText
       );
       $menuName.innerText = updatedMenuName;
+    }
+
+    /** 메뉴 삭제 */
+    if (e.target.classList.contains("menu-remove-button")) {
+      if (confirm("정말 삭제하시겠습니까?")) {
+        e.target.closest("li").remove();
+        updateMenuCount();
+      }
     }
   });
 
@@ -70,8 +83,7 @@ function App() {
      * 총 메뉴 개수 업데이트
      * li 개수를 카운팅?
      */
-    const menuCount = $("#espresso-menu-list").querySelectorAll("li").length;
-    $(".menu-count").innerText = `총 ${menuCount} 개`;
+    updateMenuCount();
 
     /** input 은 빈 값으로 초기화 */
     $("#espresso-menu-name").value = "";
