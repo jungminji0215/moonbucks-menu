@@ -2,6 +2,9 @@
  * 
  * <localStorage>
  * - [ ] localStorage 에 데이터를 저장한다.
+ *  - [x] 메뉴를 추가할 때
+ *  - [ ] 메뉴를 수정할 때
+ *  = [ ] 메뉴를 삭제할 때
  * - [ ] localStorage 에서 데이터를 읽어온다. (새로고침해도 남아있게)
  * 
  * <카테고리별 메뉴판 관리>
@@ -46,7 +49,8 @@ function App() {
    * App 이라는 함수 객체가 가지고 있는 상태이기때문에
    * this 를 이용해서 관리
    */
-  this.menu = []; // 메뉴가 여러개니까 배열로 초기화해주자.
+  // 메뉴가 여러개니까 배열로 초기화해주자. (이렇게 초기화를 해주면 협업할 때 이 상태는 어떤 형태로 데이터가 관리되겠구나! 를 알 수 있음)
+  this.menu = [];
 
   const updateMenuCount = () => {
     const menuCount = $("#espresso-menu-list").querySelectorAll("li").length;
@@ -55,6 +59,7 @@ function App() {
 
   // 재사용하는 함수끼리
   const addMenuName = () => {
+    console.log("메뉴를 추가하겠습니다. =>> ", this.menu);
     if ($("#espresso-menu-name").value === "") {
       alert("메뉴를 입력하세요!");
       return;
@@ -67,8 +72,9 @@ function App() {
     store.setLocalStorage(this.menu);
 
     const template = this.menu
-      .map((item) => {
-        return `<li class="menu-list-item d-flex items-center py-2">
+      .map((item, index) => {
+        // data-menu-id 는 나중에 dataset 으로 접근할 수 있다.
+        return `<li data-menu-id="${index}" class="menu-list-item d-flex items-center py-2">
       <span class="w-100 pl-2 menu-name">${item.name}</span>
       <button
         type="button"
@@ -100,8 +106,11 @@ function App() {
   };
 
   const updateMenuName = (e) => {
+    const menuId = e.target.closest("li").dataset.menuId;
     const $menuName = e.target.closest("li").querySelector(".menu-name");
     let updatedMenuName = prompt("메뉴명을 수정해주세요.", $menuName.innerText);
+    this.menu[menuId].name = updatedMenuName;
+    store.setLocalStorage(this.menu);
     $menuName.innerText = updatedMenuName;
   };
 
