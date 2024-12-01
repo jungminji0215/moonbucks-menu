@@ -1,10 +1,10 @@
 /** STEP2 요구사항 정리
  * 
  * <localStorage>
- * - [ ] localStorage 에 데이터를 저장한다.
+ * - [x] localStorage 에 데이터를 저장한다.
  *  - [x] 메뉴를 추가할 때
- *  - [ ] 메뉴를 수정할 때
- *  = [ ] 메뉴를 삭제할 때
+ *  - [x] 메뉴를 수정할 때
+ *  - [x] 메뉴를 삭제할 때
  * - [ ] localStorage 에서 데이터를 읽어온다. (새로고침해도 남아있게)
  * 
  * <카테고리별 메뉴판 관리>
@@ -116,6 +116,9 @@ function App() {
 
   const removeMenuName = (e) => {
     if (confirm("정말 삭제하시겠습니까?")) {
+      const menuId = e.target.closest("li").dataset.menuId;
+      this.menu.splice(menuId, 1);
+      store.setLocalStorage(this.menu);
       e.target.closest("li").remove();
       updateMenuCount();
     }
