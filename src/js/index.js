@@ -23,8 +23,31 @@
 
 const $ = (selector) => document.querySelector(selector);
 
+/** MEMO 로컬스토리지 사용할 때 이렇게 객체 만들어서 관리하면 좋구나... */
+const store = {
+  setLocalStorage(menu) {
+    localStorage.setItem("menu", JSON.stringify(menu));
+  },
+  getLocalStorage() {
+    localStorage.getItem("menu");
+  },
+};
+
 // 이 함수가 실행해야함
 function App() {
+  /**
+   * 이 앱에 상태가 뭐뭐 있을까?
+   * 상태 : 변할 수 있는 데이터 (변하기때문에 관리를 해주어야한다.)
+   * - 메뉴명
+   * - 품절 여부
+   */
+
+  /** 메뉴명 상태
+   * App 이라는 함수 객체가 가지고 있는 상태이기때문에
+   * this 를 이용해서 관리
+   */
+  this.menu = []; // 메뉴가 여러개니까 배열로 초기화해주자.
+
   const updateMenuCount = () => {
     const menuCount = $("#espresso-menu-list").querySelectorAll("li").length;
     $(".menu-count").innerText = `총 ${menuCount} 개`;
@@ -37,30 +60,34 @@ function App() {
       return;
     }
 
+    // 화면에 input 에 입력한 값을 가져온다.
     const espressoMenuName = $("#espresso-menu-name").value;
 
-    const menuItemTemplate = (espressoMenuName) => {
-      return `<li class="menu-list-item d-flex items-center py-2">
-              <span class="w-100 pl-2 menu-name">${espressoMenuName}</span>
-              <button
-                type="button"
-                class="bg-gray-50 text-gray-500 text-sm mr-1 menu-edit-button"
-              >
-                수정
-              </button>
-              <button
-                type="button"
-                class="bg-gray-50 text-gray-500 text-sm menu-remove-button"
-              >
-                삭제
-              </button>
-              </li>`;
-    };
+    this.menu.push({ name: espressoMenuName });
+    store.setLocalStorage(this.menu);
 
-    $("#espresso-menu-list").insertAdjacentHTML(
-      "beforeend",
-      menuItemTemplate(espressoMenuName)
-    );
+    const template = this.menu
+      .map((item) => {
+        return `<li class="menu-list-item d-flex items-center py-2">
+      <span class="w-100 pl-2 menu-name">${item.name}</span>
+      <button
+        type="button"
+        class="bg-gray-50 text-gray-500 text-sm mr-1 menu-edit-button"
+      >
+        수정
+      </button>
+      <button
+        type="button"
+        class="bg-gray-50 text-gray-500 text-sm menu-remove-button"
+      >
+        삭제
+      </button>
+      </li>`;
+      })
+      .join("");
+
+    // 만든 템플릿을 화면의 적절한 위치에 추가해준다.
+    $("#espresso-menu-list").innerHTML = template;
 
     /**
      * 총 메뉴 개수 업데이트
@@ -116,4 +143,4 @@ function App() {
   });
 }
 
-App();
+new App();
