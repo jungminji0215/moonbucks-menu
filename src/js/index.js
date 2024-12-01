@@ -5,7 +5,7 @@
  *  - [x] 메뉴를 추가할 때
  *  - [x] 메뉴를 수정할 때
  *  - [x] 메뉴를 삭제할 때
- * - [ ] localStorage 에서 데이터를 읽어온다. (새로고침해도 남아있게)
+ * - [x] localStorage 에서 데이터를 읽어온다. (새로고침해도 남아있게)
  * 
  * <카테고리별 메뉴판 관리>
  * - [ ] 에스프레소 메뉴판 관리
@@ -32,7 +32,8 @@ const store = {
     localStorage.setItem("menu", JSON.stringify(menu));
   },
   getLocalStorage() {
-    localStorage.getItem("menu");
+    // 객체로 변경해주어야한다.
+    return JSON.parse(localStorage.getItem("menu"));
   },
 };
 
@@ -52,25 +53,15 @@ function App() {
   // 메뉴가 여러개니까 배열로 초기화해주자. (이렇게 초기화를 해주면 협업할 때 이 상태는 어떤 형태로 데이터가 관리되겠구나! 를 알 수 있음)
   this.menu = [];
 
-  const updateMenuCount = () => {
-    const menuCount = $("#espresso-menu-list").querySelectorAll("li").length;
-    $(".menu-count").innerText = `총 ${menuCount} 개`;
+  /** 페이지 최초 접근했을 때 App 이라는 함수가 하나의 객체로 인스턴스가 생성될 때 로컬스토리지 데이터를 불러오자 */
+  this.init = () => {
+    if (store.getLocalStorage().length > 1) {
+      this.menu = store.getLocalStorage();
+    }
+    render();
   };
 
-  // 재사용하는 함수끼리
-  const addMenuName = () => {
-    console.log("메뉴를 추가하겠습니다. =>> ", this.menu);
-    if ($("#espresso-menu-name").value === "") {
-      alert("메뉴를 입력하세요!");
-      return;
-    }
-
-    // 화면에 input 에 입력한 값을 가져온다.
-    const espressoMenuName = $("#espresso-menu-name").value;
-
-    this.menu.push({ name: espressoMenuName });
-    store.setLocalStorage(this.menu);
-
+  const render = () => {
     const template = this.menu
       .map((item, index) => {
         // data-menu-id 는 나중에 dataset 으로 접근할 수 있다.
@@ -100,6 +91,28 @@ function App() {
      * li 개수를 카운팅?
      */
     updateMenuCount();
+  };
+
+  const updateMenuCount = () => {
+    const menuCount = $("#espresso-menu-list").querySelectorAll("li").length;
+    $(".menu-count").innerText = `총 ${menuCount} 개`;
+  };
+
+  // 재사용하는 함수끼리
+  const addMenuName = () => {
+    console.log("메뉴를 추가하겠습니다. =>> ", this.menu);
+    if ($("#espresso-menu-name").value === "") {
+      alert("메뉴를 입력하세요!");
+      return;
+    }
+
+    // 화면에 input 에 입력한 값을 가져온다.
+    const espressoMenuName = $("#espresso-menu-name").value;
+
+    this.menu.push({ name: espressoMenuName });
+    store.setLocalStorage(this.menu);
+
+    render();
 
     /** input 은 빈 값으로 초기화 */
     $("#espresso-menu-name").value = "";
@@ -155,4 +168,6 @@ function App() {
   });
 }
 
-new App();
+/** 맨 처음에 앱이라는 객체가 생성되고, 그 객체의 init 이 실행할 수 있도록하자. */
+const app = new App();
+app.init();
