@@ -1,7 +1,7 @@
 /** STEP3 요구사항 정리
  *
  * <서버 요청 부분>
- * - [ ] 웹 서버를 띄운다.
+ * - [x] 웹 서버를 띄운다.
  * - [ ] 서버에 새로운 메뉴명을 추가될 수 있도록 요청한다.
  * - [ ] 서버에 카테고리별 메뉴리스트를 요청한다.
  * - [ ] 서버에 메뉴 이름을 수정 될 수 있도록 요청한다.
@@ -19,6 +19,15 @@
 
 import { $ } from "./utils/dom.js";
 import store from "./store/index.js";
+
+const BASE_URL = "http://localhost:3000/api";
+
+const MenuApi = {
+  async getAllMenuByCategory(category) {
+    const response = await fetch(`${BASE_URL}/category/${category}/menu`);
+    return response.json();
+  },
+};
 
 // 이 함수가 실행해야함
 // 한 파일에는 하나의 객체만 있어야 좋다.
@@ -50,10 +59,11 @@ function App() {
   this.currentCategory = "espresso"; // 초기 상태는 에스프레소
 
   /** 페이지 최초 접근했을 때 App 이라는 함수가 하나의 객체로 인스턴스가 생성될 때 로컬스토리지 데이터를 불러오자 */
-  this.init = () => {
-    if (store.getLocalStorage()) {
-      this.menu = store.getLocalStorage();
-    }
+  this.init = async () => {
+    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
+
     render();
     initEventListeners();
   };
@@ -105,7 +115,7 @@ function App() {
   };
 
   // 재사용하는 함수끼리
-  const addMenuName = () => {
+  const addMenuName = async () => {
     if ($("#menu-name").value === "") {
       alert("메뉴를 입력하세요!");
       return;
@@ -114,12 +124,20 @@ function App() {
     // 화면에 input 에 입력한 값을 가져온다.
     const menuName = $("#menu-name").value;
 
-    this.menu[this.currentCategory].push({ name: menuName });
-    store.setLocalStorage(this.menu);
+    await fetch(`${BASE_URL}/category/${this.currentCategory}/menu`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name: menuName }),
+    }).then((response) => {
+      return response.json();
+    });
 
+    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
     render();
-
-    /** input 은 빈 값으로 초기화 */
     $("#menu-name").value = "";
   };
 
