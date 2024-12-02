@@ -161,12 +161,14 @@ function App() {
     // 메뉴 아이디를 가져오기
     const menuId = e.target.closest("li").dataset.menuId;
 
-    // 그 메뉴에
-    this.menu[this.currentCategory][menuId].soldOut = true;
+    // 처음에 soldOut 은 없으므로 undefined 이다.
+    this.menu[this.currentCategory][menuId].soldOut =
+      !this.menu[this.currentCategory][menuId].soldOut;
     store.setLocalStorage(this.menu);
     render();
   };
 
+  /** 이벤트 위임!! */
   $("#menu-list").addEventListener("click", (e) => {
     /** 메뉴 수정 */
     // 수정 버튼에 이벤트를 주려고했는데, 코드를 짜는 시점에 수정 버튼이 없다.
