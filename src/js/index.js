@@ -77,20 +77,29 @@ function App() {
     const template = this.menu[this.currentCategory]
       .map((item, index) => {
         // data-menu-id 는 나중에 dataset 으로 접근할 수 있다.
-        return `<li data-menu-id="${index}" class="menu-list-item d-flex items-center py-2">
-      <span class="w-100 pl-2 menu-name">${item.name}</span>
-      <button
-        type="button"
-        class="bg-gray-50 text-gray-500 text-sm mr-1 menu-edit-button"
-      >
-        수정
-      </button>
-      <button
-        type="button"
-        class="bg-gray-50 text-gray-500 text-sm menu-remove-button"
-      >
-        삭제
-      </button>
+        return `
+      <li data-menu-id="${index}" class=" menu-list-item d-flex items-center py-2">
+        <span class="${item.soldOut && "sold-out"} w-100 pl-2 menu-name">${
+          item.name
+        }</span>
+        <button
+          type="button"
+          class="bg-gray-50 text-gray-500 text-sm mr-1 menu-sold-out-button"
+        >
+          품절
+        </button>
+        <button
+          type="button"
+          class="bg-gray-50 text-gray-500 text-sm mr-1 menu-edit-button"
+        >
+          수정
+        </button>
+        <button
+          type="button"
+          class="bg-gray-50 text-gray-500 text-sm menu-remove-button"
+        >
+          삭제
+        </button>
       </li>`;
       })
       .join("");
@@ -148,6 +157,16 @@ function App() {
     }
   };
 
+  const soldOutMenu = (e) => {
+    // 메뉴 아이디를 가져오기
+    const menuId = e.target.closest("li").dataset.menuId;
+
+    // 그 메뉴에
+    this.menu[this.currentCategory][menuId].soldOut = true;
+    store.setLocalStorage(this.menu);
+    render();
+  };
+
   $("#menu-list").addEventListener("click", (e) => {
     /** 메뉴 수정 */
     // 수정 버튼에 이벤트를 주려고했는데, 코드를 짜는 시점에 수정 버튼이 없다.
@@ -155,11 +174,19 @@ function App() {
     // 즉, 요소가 아직 없을 때, 다른애한테 이벤트를 먼저 받고있으라고 위임할 수 있다.
     if (e.target.classList.contains("menu-edit-button")) {
       updateMenuName(e);
+      return; // return 을 해주면 밑에 코드를 불필요하게 실행하지 않아도 됨
     }
 
     /** 메뉴 삭제 */
     if (e.target.classList.contains("menu-remove-button")) {
       removeMenuName(e);
+      return;
+    }
+
+    /** 품절 상태로 만들기 */
+    if (e.target.classList.contains("menu-sold-out-button")) {
+      soldOutMenu(e);
+      return;
     }
   });
 
