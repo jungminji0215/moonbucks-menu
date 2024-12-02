@@ -8,15 +8,15 @@
  * - [x] localStorage 에서 데이터를 읽어온다. (새로고침해도 남아있게)
  * 
  * <카테고리별 메뉴판 관리>
- * - [ ] 에스프레소 메뉴판 관리
- * - [ ] 프라푸치노 메뉴판 관리
- * - [ ] 블랜디드 메뉴판 관리
- * - [ ] 티바나 메뉴판 관리
- * - [ ] 디저트 메뉴판 관리
+ * - [x] 에스프레소 메뉴판 관리
+ * - [x] 프라푸치노 메뉴판 관리
+ * - [x] 블랜디드 메뉴판 관리
+ * - [x] 티바나 메뉴판 관리
+ * - [x] 디저트 메뉴판 관리
  * 
  * <페이지 접근 시 최초 데이터 Read & Rendering>
- * - [ ] 페이지에 최초로 접근할 때 로컬스토리지에서 데이터를 조회한다.
- * - [ ] 에스프레소 메뉴를 페이지에 그려준다.
+ * - [x] 페이지에 최초로 접근할 때 로컬스토리지에서 데이터를 조회한다.
+ * - [x] 에스프레소 메뉴를 페이지에 그려준다.
 
 * <품절>
  * - [ ] 품절 버튼 추가한다.
@@ -51,18 +51,30 @@ function App() {
    * this 를 이용해서 관리
    */
   // 메뉴가 여러개니까 배열로 초기화해주자. (이렇게 초기화를 해주면 협업할 때 이 상태는 어떤 형태로 데이터가 관리되겠구나! 를 알 수 있음)
-  this.menu = [];
+  // this.menu = [];
+
+  // 카테고리 다양화로 인한 menu 형태 변경
+  this.menu = {
+    espresso: [],
+    frappuccino: [],
+    blended: [],
+    teavana: [],
+    desert: [],
+  };
+
+  /** 현재 어떤 카테고리를 선택했는지 파악하기 위한 상태 */
+  this.currentCategory = "espresso"; // 초기 상태는 에스프레소
 
   /** 페이지 최초 접근했을 때 App 이라는 함수가 하나의 객체로 인스턴스가 생성될 때 로컬스토리지 데이터를 불러오자 */
   this.init = () => {
-    if (store.getLocalStorage().length > 1) {
+    if (store.getLocalStorage()) {
       this.menu = store.getLocalStorage();
     }
     render();
   };
 
   const render = () => {
-    const template = this.menu
+    const template = this.menu[this.currentCategory]
       .map((item, index) => {
         // data-menu-id 는 나중에 dataset 으로 접근할 수 있다.
         return `<li data-menu-id="${index}" class="menu-list-item d-flex items-center py-2">
@@ -84,7 +96,7 @@ function App() {
       .join("");
 
     // 만든 템플릿을 화면의 적절한 위치에 추가해준다.
-    $("#espresso-menu-list").innerHTML = template;
+    $("#menu-list").innerHTML = template;
 
     /**
      * 총 메뉴 개수 업데이트
@@ -94,35 +106,34 @@ function App() {
   };
 
   const updateMenuCount = () => {
-    const menuCount = $("#espresso-menu-list").querySelectorAll("li").length;
+    const menuCount = $("#menu-list").querySelectorAll("li").length;
     $(".menu-count").innerText = `총 ${menuCount} 개`;
   };
 
   // 재사용하는 함수끼리
   const addMenuName = () => {
-    console.log("메뉴를 추가하겠습니다. =>> ", this.menu);
-    if ($("#espresso-menu-name").value === "") {
+    if ($("#menu-name").value === "") {
       alert("메뉴를 입력하세요!");
       return;
     }
 
     // 화면에 input 에 입력한 값을 가져온다.
-    const espressoMenuName = $("#espresso-menu-name").value;
+    const menuName = $("#menu-name").value;
 
-    this.menu.push({ name: espressoMenuName });
+    this.menu[this.currentCategory].push({ name: menuName });
     store.setLocalStorage(this.menu);
 
     render();
 
     /** input 은 빈 값으로 초기화 */
-    $("#espresso-menu-name").value = "";
+    $("#menu-name").value = "";
   };
 
   const updateMenuName = (e) => {
     const menuId = e.target.closest("li").dataset.menuId;
     const $menuName = e.target.closest("li").querySelector(".menu-name");
     let updatedMenuName = prompt("메뉴명을 수정해주세요.", $menuName.innerText);
-    this.menu[menuId].name = updatedMenuName;
+    this.menu[this.currentCategory][menuId].name = updatedMenuName;
     store.setLocalStorage(this.menu);
     $menuName.innerText = updatedMenuName;
   };
@@ -130,14 +141,14 @@ function App() {
   const removeMenuName = (e) => {
     if (confirm("정말 삭제하시겠습니까?")) {
       const menuId = e.target.closest("li").dataset.menuId;
-      this.menu.splice(menuId, 1);
+      this.menu[this.currentCategory].splice(menuId, 1);
       store.setLocalStorage(this.menu);
       e.target.closest("li").remove();
       updateMenuCount();
     }
   };
 
-  $("#espresso-menu-list").addEventListener("click", (e) => {
+  $("#menu-list").addEventListener("click", (e) => {
     /** 메뉴 수정 */
     // 수정 버튼에 이벤트를 주려고했는데, 코드를 짜는 시점에 수정 버튼이 없다.
     // 이럴때 "이벤트 위임"이라는 것을 통해 해결할 수 있다.
@@ -153,18 +164,30 @@ function App() {
   });
 
   // form 태그가 자동으로 전송되는걸 막아준다.
-  $("#espresso-menu-form").addEventListener("submit", (e) => {
+  $("#menu-form").addEventListener("submit", (e) => {
     e.preventDefault();
   });
 
-  $("#espresso-menu-submit-button").addEventListener("click", addMenuName);
+  $("#menu-submit-button").addEventListener("click", addMenuName);
 
-  $("#espresso-menu-name").addEventListener("keypress", (e) => {
+  $("#menu-name").addEventListener("keypress", (e) => {
     if (e.key !== "Enter") {
       return;
     }
 
     addMenuName();
+  });
+
+  /** 카테고리 선택 */
+  $("nav").addEventListener("click", (e) => {
+    /** 이거를 안 하면 카테고리 가운데 빈 영역을 클릭해도 이벤트가 먹힘 */
+    const isCategoryButton = e.target.classList.contains("cafe-category-name");
+    if (isCategoryButton) {
+      const categoryName = e.target.dataset.categoryName;
+      this.currentCategory = categoryName;
+      $("#category-title").innerText = `${e.target.innerText} 메뉴 관리`;
+      render();
+    }
   });
 }
 
