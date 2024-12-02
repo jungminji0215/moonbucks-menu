@@ -24,20 +24,11 @@
  * - [ ] 클릭 이벤트에서 가장 가까운 li 태그의 class 속성 값에 sold-out 을 추가한다.
  */
 
-const $ = (selector) => document.querySelector(selector);
-
-/** MEMO 로컬스토리지 사용할 때 이렇게 객체 만들어서 관리하면 좋구나... */
-const store = {
-  setLocalStorage(menu) {
-    localStorage.setItem("menu", JSON.stringify(menu));
-  },
-  getLocalStorage() {
-    // 객체로 변경해주어야한다.
-    return JSON.parse(localStorage.getItem("menu"));
-  },
-};
+import { $ } from "./utils/dom.js";
+import store from "./store/index.js";
 
 // 이 함수가 실행해야함
+// 한 파일에는 하나의 객체만 있어야 좋다.
 function App() {
   /**
    * 이 앱에 상태가 뭐뭐 있을까?
@@ -71,6 +62,7 @@ function App() {
       this.menu = store.getLocalStorage();
     }
     render();
+    initEventListeners();
   };
 
   const render = () => {
@@ -115,7 +107,7 @@ function App() {
   };
 
   const updateMenuCount = () => {
-    const menuCount = $("#menu-list").querySelectorAll("li").length;
+    const menuCount = this.menu[this.currentCategory].length;
     $(".menu-count").innerText = `총 ${menuCount} 개`;
   };
 
@@ -144,7 +136,7 @@ function App() {
     let updatedMenuName = prompt("메뉴명을 수정해주세요.", $menuName.innerText);
     this.menu[this.currentCategory][menuId].name = updatedMenuName;
     store.setLocalStorage(this.menu);
-    $menuName.innerText = updatedMenuName;
+    render();
   };
 
   const removeMenuName = (e) => {
@@ -152,8 +144,7 @@ function App() {
       const menuId = e.target.closest("li").dataset.menuId;
       this.menu[this.currentCategory].splice(menuId, 1);
       store.setLocalStorage(this.menu);
-      e.target.closest("li").remove();
-      updateMenuCount();
+      render();
     }
   };
 
@@ -168,56 +159,63 @@ function App() {
     render();
   };
 
-  /** 이벤트 위임!! */
-  $("#menu-list").addEventListener("click", (e) => {
-    /** 메뉴 수정 */
-    // 수정 버튼에 이벤트를 주려고했는데, 코드를 짜는 시점에 수정 버튼이 없다.
-    // 이럴때 "이벤트 위임"이라는 것을 통해 해결할 수 있다.
-    // 즉, 요소가 아직 없을 때, 다른애한테 이벤트를 먼저 받고있으라고 위임할 수 있다.
-    if (e.target.classList.contains("menu-edit-button")) {
-      updateMenuName(e);
-      return; // return 을 해주면 밑에 코드를 불필요하게 실행하지 않아도 됨
-    }
+  /**
+   * 이벤트 리스너 따로 관리
+   * 이렇게 따로 관리하면 나중에 분리하기도 좋을 것이다.
+   * */
+  const initEventListeners = () => {
+    /** 이벤트 위임!! */
+    $("#menu-list").addEventListener("click", (e) => {
+      /** 메뉴 수정 */
+      // 수정 버튼에 이벤트를 주려고했는데, 코드를 짜는 시점에 수정 버튼이 없다.
+      // 이럴때 "이벤트 위임"이라는 것을 통해 해결할 수 있다.
+      // 즉, 요소가 아직 없을 때, 다른애한테 이벤트를 먼저 받고있으라고 위임할 수 있다.
+      if (e.target.classList.contains("menu-edit-button")) {
+        updateMenuName(e);
+        return; // return 을 해주면 밑에 코드를 불필요하게 실행하지 않아도 됨
+      }
 
-    /** 메뉴 삭제 */
-    if (e.target.classList.contains("menu-remove-button")) {
-      removeMenuName(e);
-      return;
-    }
+      /** 메뉴 삭제 */
+      if (e.target.classList.contains("menu-remove-button")) {
+        removeMenuName(e);
+        return;
+      }
 
-    /** 품절 상태로 만들기 */
-    if (e.target.classList.contains("menu-sold-out-button")) {
-      soldOutMenu(e);
-      return;
-    }
-  });
+      /** 품절 상태로 만들기 */
+      if (e.target.classList.contains("menu-sold-out-button")) {
+        soldOutMenu(e);
+        return;
+      }
+    });
 
-  // form 태그가 자동으로 전송되는걸 막아준다.
-  $("#menu-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-  });
+    // form 태그가 자동으로 전송되는걸 막아준다.
+    $("#menu-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+    });
 
-  $("#menu-submit-button").addEventListener("click", addMenuName);
+    $("#menu-submit-button").addEventListener("click", addMenuName);
 
-  $("#menu-name").addEventListener("keypress", (e) => {
-    if (e.key !== "Enter") {
-      return;
-    }
+    $("#menu-name").addEventListener("keypress", (e) => {
+      if (e.key !== "Enter") {
+        return;
+      }
 
-    addMenuName();
-  });
+      addMenuName();
+    });
 
-  /** 카테고리 선택 */
-  $("nav").addEventListener("click", (e) => {
-    /** 이거를 안 하면 카테고리 가운데 빈 영역을 클릭해도 이벤트가 먹힘 */
-    const isCategoryButton = e.target.classList.contains("cafe-category-name");
-    if (isCategoryButton) {
-      const categoryName = e.target.dataset.categoryName;
-      this.currentCategory = categoryName;
-      $("#category-title").innerText = `${e.target.innerText} 메뉴 관리`;
-      render();
-    }
-  });
+    /** 카테고리 선택 */
+    $("nav").addEventListener("click", (e) => {
+      /** 이거를 안 하면 카테고리 가운데 빈 영역을 클릭해도 이벤트가 먹힘 */
+      const isCategoryButton =
+        e.target.classList.contains("cafe-category-name");
+      if (isCategoryButton) {
+        const categoryName = e.target.dataset.categoryName;
+        this.currentCategory = categoryName;
+        $("#category-title").innerText = `${e.target.innerText} 메뉴 관리`;
+        render();
+      }
+    });
+  };
 }
 
 /** 맨 처음에 앱이라는 객체가 생성되고, 그 객체의 init 이 실행할 수 있도록하자. */
