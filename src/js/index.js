@@ -60,6 +60,19 @@ const MenuApi = {
 
     return response.json();
   },
+
+  async toggleSoldOutMenu(category, menuId) {
+    const response = await fetch(
+      `${BASE_URL}/category/${category}/menu/${menuId}/soldout`,
+      {
+        method: "PUT",
+      }
+    );
+
+    if (!response.ok) {
+      console.error("에러가 발생했습니다.");
+    }
+  },
 };
 
 // 이 함수가 실행해야함
@@ -109,7 +122,7 @@ function App() {
       <li data-menu-id="${
         item.id
       }" class=" menu-list-item d-flex items-center py-2">
-        <span class="${item.soldOut && "sold-out"} w-100 pl-2 menu-name">${
+        <span class="${item.isSoldOut && "sold-out"} w-100 pl-2 menu-name">${
           item.name
         }</span>
         <button
@@ -195,14 +208,15 @@ function App() {
     }
   };
 
-  const soldOutMenu = (e) => {
+  const soldOutMenu = async (e) => {
     // 메뉴 아이디를 가져오기
     const menuId = e.target.closest("li").dataset.menuId;
+    await MenuApi.toggleSoldOutMenu(this.currentCategory, menuId);
 
-    // 처음에 soldOut 은 없으므로 undefined 이다.
-    this.menu[this.currentCategory][menuId].soldOut =
-      !this.menu[this.currentCategory][menuId].soldOut;
-    store.setLocalStorage(this.menu);
+    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
+
     render();
   };
 
