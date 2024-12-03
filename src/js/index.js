@@ -4,89 +4,21 @@
  * - [x] 웹 서버를 띄운다.
  * - [x] 서버에 새로운 메뉴명을 추가될 수 있도록 요청한다.
  * - [x] 서버에 카테고리별 메뉴리스트를 요청한다.
- * - [ ] 서버에 메뉴 이름을 수정 될 수 있도록 요청한다.
- * - [ ] 서버에 메뉴의 품절상태를 토글로 변경할 수 있도록 한다.
- * - [ ] 서버에 메뉴가 삭제되도록 요청한다.
+ * - [x] 서버에 메뉴 이름을 수정 될 수 있도록 요청한다.
+ * - [x] 서버에 메뉴의 품절상태를 토글로 변경할 수 있도록 한다.
+ * - [x] 서버에 메뉴가 삭제되도록 요청한다.
  *
  * <리팩토링 부분>
- * - [ ] 로컬스토리지에 저장하는 로직은 지운다.
- * - [ ] fetch 비동기 api 를 사용하는 부분을 async await 을 사용하여 구현한다.
+ * - [x] 로컬스토리지에 저장하는 로직은 지운다.
+ * - [x] fetch 비동기 api 를 사용하는 부분을 async await 을 사용하여 구현한다.
  *
  * <사용자 경험>
  * - [ ] API 통신이 실패하는 경우에 대해 사용자가 알 수 있게 alert 으로 예외처리를 진행한다.
- * - [ ] 중복되는 메뮤는 추가할 수 없다.
+ * - [x] 중복되는 메뉴는 추가할 수 없다.
  */
 
 import { $ } from "./utils/dom.js";
-import store from "./store/index.js";
-
-const BASE_URL = "http://localhost:3000/api";
-
-const MenuApi = {
-  async getAllMenuByCategory(category) {
-    const response = await fetch(`${BASE_URL}/category/${category}/menu`);
-    return response.json();
-  },
-
-  async createMenu(category, name) {
-    const response = await fetch(`${BASE_URL}/category/${category}/menu`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name }), // key, value 이름이 같으면 이렇게 하나만 적어도 된다.
-    });
-
-    if (!response.ok) {
-      console.error("에러가 발생했습니다.");
-    }
-  },
-
-  async updateMenu(category, name, menuId) {
-    const response = await fetch(
-      `${BASE_URL}/category/${category}/menu/${menuId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name }),
-      }
-    );
-
-    if (!response.ok) {
-      console.error(response);
-    }
-
-    return response.json();
-  },
-
-  async toggleSoldOutMenu(category, menuId) {
-    const response = await fetch(
-      `${BASE_URL}/category/${category}/menu/${menuId}/soldout`,
-      {
-        method: "PUT",
-      }
-    );
-
-    if (!response.ok) {
-      console.error("에러가 발생했습니다.");
-    }
-  },
-
-  async deleteMenu(category, menuId) {
-    const response = await fetch(
-      `${BASE_URL}/category/${category}/menu/${menuId}`,
-      {
-        method: "DELETE",
-      }
-    );
-
-    if (!response.ok) {
-      console.error("에러가 발생했습니다.");
-    }
-  },
-};
+import MenuApi from "./api/index.js";
 
 // 이 함수가 실행해야함
 // 한 파일에는 하나의 객체만 있어야 좋다.
@@ -119,15 +51,15 @@ function App() {
 
   /** 페이지 최초 접근했을 때 App 이라는 함수가 하나의 객체로 인스턴스가 생성될 때 로컬스토리지 데이터를 불러오자 */
   this.init = async () => {
-    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
-      this.currentCategory
-    );
-
     render();
     initEventListeners();
   };
 
-  const render = () => {
+  const render = async () => {
+    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
+
     const template = this.menu[this.currentCategory]
       .map((item) => {
         // data-menu-id 는 나중에 dataset 으로 접근할 수 있다.
@@ -175,10 +107,19 @@ function App() {
     $(".menu-count").innerText = `총 ${menuCount} 개`;
   };
 
-  // 재사용하는 함수끼리
   const addMenuName = async () => {
     if ($("#menu-name").value === "") {
       alert("메뉴를 입력하세요!");
+      return;
+    }
+
+    const duplicatedItem = this.menu[this.currentCategory].find(
+      (menuItem) => menuItem.name === $("#menu-name").value
+    );
+
+    if (duplicatedItem) {
+      alert("이미 등록된 메뉴입니다. 다시 입력해주세요.");
+      $("#menu-name").value = "";
       return;
     }
 
@@ -186,10 +127,6 @@ function App() {
     const menuName = $("#menu-name").value;
 
     await MenuApi.createMenu(this.currentCategory, menuName);
-
-    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
-      this.currentCategory
-    );
 
     render();
     $("#menu-name").value = "";
@@ -205,10 +142,6 @@ function App() {
 
     await MenuApi.updateMenu(this.currentCategory, updatedMenuName, menuId);
 
-    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
-      this.currentCategory
-    );
-
     render();
   };
 
@@ -216,9 +149,7 @@ function App() {
     if (confirm("정말 삭제하시겠습니까?")) {
       const menuId = e.target.closest("li").dataset.menuId;
       await MenuApi.deleteMenu(this.currentCategory, menuId);
-      this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
-        this.currentCategory
-      );
+
       render();
     }
   };
@@ -228,11 +159,23 @@ function App() {
     const menuId = e.target.closest("li").dataset.menuId;
     await MenuApi.toggleSoldOutMenu(this.currentCategory, menuId);
 
-    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
-      this.currentCategory
-    );
-
     render();
+  };
+
+  // changeCategory 로 함수를 분리해주면
+  // 클릭 이벤트가 일어날 때 어떤 행위를 하는지 함수명만 보고 알 수 있다.
+  // 이렇게 분리하지 않으면 어떤 동작을 하는지 한눈에 파악이 안된다.
+  const changeCategory = (e) => {
+    /** 이거를 안 하면 카테고리 가운데 빈 영역을 클릭해도 이벤트가 먹힘 */
+    const isCategoryButton = e.target.classList.contains("cafe-category-name");
+
+    if (isCategoryButton) {
+      const categoryName = e.target.dataset.categoryName;
+      this.currentCategory = categoryName;
+      $("#category-title").innerText = `${e.target.innerText} 메뉴 관리`;
+
+      render();
+    }
   };
 
   /**
@@ -280,20 +223,7 @@ function App() {
     });
 
     /** 카테고리 선택 */
-    $("nav").addEventListener("click", async (e) => {
-      /** 이거를 안 하면 카테고리 가운데 빈 영역을 클릭해도 이벤트가 먹힘 */
-      const isCategoryButton =
-        e.target.classList.contains("cafe-category-name");
-      if (isCategoryButton) {
-        const categoryName = e.target.dataset.categoryName;
-        this.currentCategory = categoryName;
-        $("#category-title").innerText = `${e.target.innerText} 메뉴 관리`;
-        this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
-          this.currentCategory
-        );
-        render();
-      }
-    });
+    $("nav").addEventListener("click", changeCategory);
   };
 }
 
