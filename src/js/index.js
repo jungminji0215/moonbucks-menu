@@ -41,6 +41,25 @@ const MenuApi = {
       console.error(response);
     }
   },
+
+  async updateMenu(category, name, menuId) {
+    const response = await fetch(
+      `${BASE_URL}/category/${category}/menu/${menuId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error(response);
+    }
+
+    return response.json();
+  },
 };
 
 // 이 함수가 실행해야함
@@ -84,10 +103,12 @@ function App() {
 
   const render = () => {
     const template = this.menu[this.currentCategory]
-      .map((item, index) => {
+      .map((item) => {
         // data-menu-id 는 나중에 dataset 으로 접근할 수 있다.
         return `
-      <li data-menu-id="${index}" class=" menu-list-item d-flex items-center py-2">
+      <li data-menu-id="${
+        item.id
+      }" class=" menu-list-item d-flex items-center py-2">
         <span class="${item.soldOut && "sold-out"} w-100 pl-2 menu-name">${
           item.name
         }</span>
@@ -139,19 +160,29 @@ function App() {
     const menuName = $("#menu-name").value;
 
     await MenuApi.createMenu(this.currentCategory, menuName);
+
     this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
       this.currentCategory
     );
+
     render();
     $("#menu-name").value = "";
   };
 
-  const updateMenuName = (e) => {
+  const updateMenuName = async (e) => {
     const menuId = e.target.closest("li").dataset.menuId;
     const $menuName = e.target.closest("li").querySelector(".menu-name");
-    let updatedMenuName = prompt("메뉴명을 수정해주세요.", $menuName.innerText);
-    this.menu[this.currentCategory][menuId].name = updatedMenuName;
-    store.setLocalStorage(this.menu);
+    const updatedMenuName = prompt(
+      "메뉴명을 수정해주세요.",
+      $menuName.innerText
+    );
+
+    await MenuApi.updateMenu(this.currentCategory, updatedMenuName, menuId);
+
+    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
+
     render();
   };
 
